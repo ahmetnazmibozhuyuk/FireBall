@@ -40,7 +40,6 @@ public class PlayerController : MonoBehaviour
     {
         BlockCreator.GetSingleton().Initialize(30, blockPrefabs, pointPrefab);
         playerFollower.SetPosition(transform);
-        _jointCreator.FindRelativePosForHingeJoint(new Vector3(0, 10, 0));
     }
 
     private void ForwardMovement()

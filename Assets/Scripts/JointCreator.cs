@@ -7,26 +7,24 @@ public class JointCreator : MonoBehaviour
 
     [SerializeField]
     private LineRenderer lRenderer;
+
+    [SerializeField]
     private HingeJoint hJoint;
 
+    [SerializeField]
+    private float ropeSpeed = 8f;
 
     private float _lineLength;
-
     private float _timeElapsed;
 
     private bool _addingNewJoint;
-    private void Awake()
-    {
 
-    }
     private void Start()
     {
-        //FindRelativePosForHingeJoint(new Vector3(0, 10, 0));
-        InitializeJoint(new Vector3(0, 10, 0));
+        InitializeJoint(new Vector3(0, 5, 0));
     }
     private void InitializeJoint(Vector3 blockPosition)
     {
-        hJoint = GetComponent<HingeJoint>();
         hJoint.anchor = blockPosition - transform.position;
         lRenderer.enabled = true;
         lRenderer.SetPosition(1,blockPosition - transform.position);
@@ -34,32 +32,30 @@ public class JointCreator : MonoBehaviour
     }
     public void FindRelativePosForHingeJoint(Vector3 blockPosition)
     {
-        //Update the block position on this line in a proper way to Find Relative position for our blockPosition
         if (hJoint != null) return;
 
-
-        //lRenderer.SetPosition(1, hJoint.anchor);
         lRenderer.enabled = true;
         _addingNewJoint = true;
-        StartCoroutine(Co_CreateJoint(Quaternion.Inverse(transform.rotation) * (blockPosition - transform.position)));
-
-
-
+        StartCoroutine(Co_CreateJoint(blockPosition));
     }
-    private IEnumerator Co_CreateJoint(Vector3 pos)
+    private IEnumerator Co_CreateJoint(Vector3 blockPosition)
     {
-
         while (_lineLength<1)
         {
             _lineLength = Mathf.Lerp(0, 1,_timeElapsed);
-            Debug.Log(_lineLength);
-            _timeElapsed += Time.deltaTime*3f;
-            lRenderer.SetPosition(1, pos * _lineLength);
-            if (!_addingNewJoint) yield break;
+            _timeElapsed += Time.deltaTime*ropeSpeed;
+            lRenderer.SetPosition(1, Quaternion.Inverse(transform.rotation) * (blockPosition - transform.position) * _lineLength);
+            if (!_addingNewJoint)
+            {
+                _lineLength = 0;
+                _timeElapsed = 0;
+                lRenderer.enabled = false;
+                yield break;
+            }
             yield return null;
         }
         hJoint = gameObject.AddComponent<HingeJoint>();
-        hJoint.anchor = pos;
+        hJoint.anchor = Quaternion.Inverse(transform.rotation) * (blockPosition - transform.position);
         HasJoint = true;
         _lineLength = 0;
         _timeElapsed = 0;
