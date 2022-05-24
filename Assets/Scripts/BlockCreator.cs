@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-
-//In this class, the map has been created.
-//You have to edit GetRelativeBlock section to calculate current relative block to cast player rope to hold on
-//Update Block Position section to make infinite map.
+//_difficulty increase makes the elevations more sharp thus the game more and more difficult. 
+//I added an another GameObject list to contain lower blocks so I could reuse them after
+//the level generation.
 public class BlockCreator : MonoBehaviour
 {
     private static BlockCreator singleton = null;
@@ -18,22 +17,19 @@ public class BlockCreator : MonoBehaviour
 
     private float _lastHeightUpperBlock = 10;
 
-    private int _selectedBoxDistance = 4;
+    private readonly int _selectedBoxDistance = 4; // The distance between the player and the box it latches onto
 
     private int _difficulty = 0;
     private int _difficultyIncreaseFrequency = 300;
-
     private int _blockCount;
-
-    private int _blockPoolAmount;
     private int _blockPoolCounter;
-
     private int _pointFrequency = 120;
 
+    private bool _shouldIncreaseElevation;
 
-    private bool _increaseElevation;
     private float _elevation;
-    private float _maxElevation = 10;
+
+    private readonly float _maxElevation = 10;
     public static BlockCreator GetSingleton()
     {
         if (singleton == null)
@@ -58,31 +54,32 @@ public class BlockCreator : MonoBehaviour
             _blockPool.Add(Instantiate(_blockPrefabs[i % 3], new Vector3(0, 10 + randomNumber+_elevation, i ), transform.rotation));
             _lowerBlockPool.Add(Instantiate(_blockPrefabs[i % 3], new Vector3(0, -10 + randomNumber+_elevation, i ), transform.rotation));
             ChangeElevation();
-            _blockPoolAmount++;
         }
         _pointObject = Instantiate(_pointPrefab);
     }
-    public Vector3 GetRelativeBlock(float playerPosZ) // This was a Transform
+    public Vector3 GetRelativeBlock(float playerPosZ) // This was a Transform that turned into a Vector3 to get the precise Vector3 point for joint.
     {
+        if (playerPosZ < 0) playerPosZ = 0;
         int i = (int)playerPosZ + _selectedBoxDistance;
+
         i %= _blockPool.Count;
         return new Vector3(
             _blockPool[i].transform.position.x,
             _blockPool[i].transform.position.y - _lastHeightUpperBlock * 0.5f, // Get the bottom point of the block
             _blockPool[i].transform.position.z);
     }
-
+    //This method acts as a Object Pool; rather than instantiating and destroying gameObjects over and over again
+    //we use a pool to greatly reduce garbage.
     public void UpdateBlockPosition(int blockIndex)
     {
         if (_blockPoolCounter >= _blockPool.Count)
         {
             _blockPoolCounter = 0;
         }
-        float randomNumber = Random.Range(-1f, 2f); // top and bot blocks get the same random number
+        float randomNumber = Random.Range(-1f, 2f); // saved in a local variable so top and bot blocks get the same random number
 
-        _blockPool[_blockPoolCounter].transform.position = new Vector3(0, 10 + randomNumber + _elevation, blockIndex + _blockPoolAmount);
-        _lowerBlockPool[_blockPoolCounter].transform.position = new Vector3(0, -10 + randomNumber + _elevation, blockIndex + _blockPoolAmount);
-
+        _blockPool[_blockPoolCounter].transform.position = new Vector3(0, 10 + randomNumber + _elevation, blockIndex + _blockCount);
+        _lowerBlockPool[_blockPoolCounter].transform.position = new Vector3(0, -10 + randomNumber + _elevation, blockIndex + _blockCount);
 
         AddNextPoint(blockIndex);
         ChangeDifficulty(blockIndex);
@@ -104,22 +101,24 @@ public class BlockCreator : MonoBehaviour
 
         if (_elevation > _maxElevation)
         {
-            _increaseElevation = false;
+            _shouldIncreaseElevation = false;
         }
         if(_elevation < 0)
         {
-            _increaseElevation = true;
+            _shouldIncreaseElevation = true;
         }
 
-        if (_increaseElevation)
+        if (_shouldIncreaseElevation)
         {
             _elevation += 0.5f+_difficulty*0.1f;
         }
         else
         {
-            _elevation-= 0.5f+_difficulty * 0.1f;
+            _elevation-= 0.5f-_difficulty * 0.1f;
         }
     }
+    // Modulo operator is a bit expensive but I still used it frequently on this class because the alternative methods I found made
+    //the class difficult to read.
     private void ChangeDifficulty(int blockIndex)
     {
         if (blockIndex % _difficultyIncreaseFrequency == 0)

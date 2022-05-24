@@ -1,8 +1,15 @@
 ﻿using System.Collections;
 using UnityEngine;
 
+//This class is responsible for setting the line renderer and HingeJoint position. I decided to relocate the Joint related methods to a seperate
+//class to make the joint creating system more modular. This way both the JointCreator and the PlayerController is less crowded and chaotic and
+//can be reused much easier.
+
+
 public class JointCreator : MonoBehaviour
 {
+    //Rather than making a public field, HasJoint is a public property that can't be changed from outside the class.
+    //This property is to prevent player from applying force to the ball when the joint connection is not created.
     public bool HasJoint { get; private set; }
 
     [SerializeField]
@@ -23,6 +30,7 @@ public class JointCreator : MonoBehaviour
     {
         InitializeJoint(new Vector3(0, 5, 0));
     }
+    //Joint initialization method is seperated from regular Joint creation method because it is created instantly.
     private void InitializeJoint(Vector3 blockPosition)
     {
         hJoint.anchor = blockPosition - transform.position;
@@ -38,6 +46,7 @@ public class JointCreator : MonoBehaviour
         _addingNewJoint = true;
         StartCoroutine(Co_CreateJoint(blockPosition));
     }
+    //Joint is created only when the line is completed using this coroutine. BreakJoint can interrupt and reset this operation so the line is recreated properly.
     private IEnumerator Co_CreateJoint(Vector3 blockPosition)
     {
         while (_lineLength<1)
@@ -64,7 +73,7 @@ public class JointCreator : MonoBehaviour
     }
     public void BreakJoint()
     {
-        _addingNewJoint = false;
+        _addingNewJoint = false; // This variable allows us to stop the coroutine even though if the _hJoint is null.
 
         if (hJoint == null) return;
 

@@ -1,15 +1,12 @@
 ﻿using UnityEngine;
 
+//private variables: _privateVariable - Serialized private and local variables: privateVariable - public variables: PublicVariable.
 
-//In this section, you have to edit OnPointerDown and OnPointerUp sections to make the game behave in a proper way using hJoint
-//Hint: You may want to Destroy and recreate the hinge Joint on the object. For a beautiful gameplay experience, joint would created after a little while (0.2 seconds f.e.) to create mechanical challege for the player
-//And also create fixed update to make score calculated real time properly.
-//Update FindRelativePosForHingeJoint to calculate the position for you rope to connect dynamically
-//You may add up new functions into this class to make it look more understandable and cosmetically great.
+//Joint creation and GUI related methods relocated to their respective classes. Considering the already small scale
+// of the project, I decided to keep the Trigger and Collision methods in this class but placed them into a region.
 [RequireComponent(typeof(JointCreator))]
 public class PlayerController : MonoBehaviour
 {
-
     [SerializeField]
     private GameObject[] blockPrefabs;
     [SerializeField]
@@ -21,25 +18,49 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private GUIController guiController;
 
-
     [SerializeField]
     private float swingSpeed = 5f;
 
     private JointCreator _jointCreator;
 
-    private bool gameOver = false;
-    private bool gameStarted = false;
+    private readonly int _perfectScorePoint = 10;
+    private readonly int _lowScorePoint = 5;
+
+    private readonly float _perfectScoreDistance = 0.5f;
+
+    private bool _gameOver = false;
+    private bool _gameStarted = false;
 
     private bool _inputIsDown;
     private void Awake()
     {
-        //Since this class is a required component; I chose to use GetComponent rather than serializing it in order to make inspector less crowded.
+        //Since JointCreator class is a required component; I chose to use GetComponent rather than serializing it in order to make inspector less crowded.
+        //I choose to use Awake method for operations like GetComponent so that I have no problems using said components on the Start method.
         _jointCreator = GetComponent<JointCreator>();
     }
     private void Start()
     {
+        // BlockCreator and playerFollower are initialized from their respective methods.
         BlockCreator.GetSingleton().Initialize(30, blockPrefabs, pointPrefab);
         playerFollower.SetPosition(transform);
+    }
+    private void Update()
+    {
+        //Score doesn't set properly since it always tend to update the score. Make a proper way to update the score as player advances
+
+        //Update method is tied to the frame rate so it is the superior method to display visual things like the score. Scaled with Time.deltaTime rather
+        //than Time.fixedDeltaTime because Time.deltaTime is the time between this Update tick and the previous one as opposed to Time.fixedDeltaTime
+        //which is the time between last FixedUpdate and this one.
+        //We could use a similar method to PlayerFollower's BlockUpdate to make the score update less frequently, but the timers precision is very high.
+        if (playerRigidbody.velocity.z != 0)
+        {
+            guiController.SetScore(playerRigidbody.velocity.z * Time.deltaTime * 0.1f);
+        }
+    }
+    private void FixedUpdate()
+    {
+        //Rigidbody operations like AddForce should be applied from FixedUpdate since it is directly tied to physics related operations.
+        ForwardMovement();
     }
 
     private void ForwardMovement()
@@ -55,9 +76,10 @@ public class PlayerController : MonoBehaviour
         _jointCreator.FindRelativePosForHingeJoint(BlockCreator.GetSingleton().GetRelativeBlock(transform.position.z));
 
 
-        if (!gameStarted)
+        if (!_gameStarted)
         {
             guiController.StartGame();
+            _gameStarted = true;
         }
     }
 
@@ -69,43 +91,35 @@ public class PlayerController : MonoBehaviour
     #region Trigger And Collision Methods
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.tag.Equals("Block") && !gameOver)
+        if (collision.gameObject.CompareTag("Block") && !_gameOver) // tag equals changed with compare tag
         {
-            PointerUp(); //Finishes the game here to stoping holding behaviour
-
-            Destroy(gameObject);
-            gameOver = true;
+            PointerUp();
+            gameObject.SetActive(false);
+            _gameOver = true;
 
             //If you know a more modular way to update UI, change the code below
 
+            //GUI related methods, fields and properties have relocated to GUIController.
             guiController.GameOver();
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
+        //Magic numbers removed.
         if (other.gameObject.CompareTag("Point")) // tag equals changed with compare tag
         {
-            if (Vector3.Distance(transform.position, other.gameObject.transform.position) < .5f)
+            if (Vector3.Distance(transform.position, other.gameObject.transform.position) < _perfectScoreDistance)
             {
-                guiController.SetScore(10);
+                guiController.SetScore(_perfectScorePoint);
             }
             else
             {
-                guiController.SetScore(5);
+                guiController.SetScore(_lowScorePoint);
             }
             other.gameObject.SetActive(false);
         }
     }
     #endregion
-    private void FixedUpdate()
-    {
-        ForwardMovement();
-        //Score doesn't set properly since it always tend to update the score. Make a proper way to update the score as player advances
-        if (playerRigidbody.velocity.z > 0)
-        {
-            guiController.SetScore(playerRigidbody.velocity.z * Time.fixedDeltaTime * 0.1f);
-        }
-    }
 
 }
