@@ -121,7 +121,8 @@ public class BlockCreator : MonoBehaviour
     #region Elevation - Difficulty
     private void ChangeElevation()
     {
-        //Check if should increase or decrease elevation.
+        //Check if should increase or decrease elevation. _shouldIncreaseElevation doesn't change when the
+        //_elevation value is between min and max value and both if's are skipped.
         if (_elevation > _maxElevation)
         {
             _shouldIncreaseElevation = false;

@@ -29,17 +29,27 @@ public class GUIController : MonoBehaviour
         realtimeScoreText.gameObject.SetActive(false);
         gameOverPanel.SetActive(true);
 
-        //nested if made more readable
+        //nested if rewritten to be more readable
 
         if (!PlayerPrefs.HasKey("HighScore") || _score > PlayerPrefs.GetFloat("HighScore"))
         {
             NewHighScore();
         }
-        scoreText.text = _score.ToString("0.00");
-        highscoreText.text = "HighestScore: " + PlayerPrefs.GetFloat("HighScore").ToString("0.00");
-
+        else
+        {
+            DisplayHighScore();
+        }
+        DisplayScore();
     }
-    //high score setting is moved to an another method so that it is more readable
+    //score display moved to their respective methods.
+    private void DisplayScore()
+    {
+        scoreText.text = _score.ToString("0.00");
+    }
+    private void DisplayHighScore()
+    {
+        highscoreText.text = "HighestScore: " + PlayerPrefs.GetFloat("HighScore").ToString("0.00");
+    }
     private void NewHighScore()
     {
         PlayerPrefs.SetFloat("HighScore", _score);

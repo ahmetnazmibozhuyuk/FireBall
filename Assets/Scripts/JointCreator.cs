@@ -49,7 +49,7 @@ public class JointCreator : MonoBehaviour
         {
             _lineLength = Mathf.Lerp(0, 1,_timeElapsed);
             _timeElapsed += Time.deltaTime*ropeSpeed;
-            //Quaternion.Inverse operation is applied to 
+            //Quaternion.Inverse operation is applied to counterbalance the rotation on the rigidbody to set the line renderer and joint position properly.
             lRenderer.SetPosition(1, Quaternion.Inverse(transform.rotation) * (blockPosition - transform.position) * _lineLength);
             if (!_addingNewJoint)
             {
@@ -70,7 +70,7 @@ public class JointCreator : MonoBehaviour
     }
     public void BreakJoint()
     {
-        _addingNewJoint = false; // This variable allows us to stop the coroutine even though if the _hJoint is null.
+        _addingNewJoint = false; // This variable allows us to break from the coroutine even though if the _hJoint is null.
 
         if (hJoint == null) return;
 
