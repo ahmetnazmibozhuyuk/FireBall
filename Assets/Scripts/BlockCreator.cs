@@ -117,8 +117,7 @@ public class BlockCreator : MonoBehaviour
             _elevation-= 0.5f-_difficulty * 0.1f;
         }
     }
-    // Modulo operator is a bit expensive but I still used it frequently on this class because the alternative methods I found made
-    //the class difficult to read.
+
     private void ChangeDifficulty(int blockIndex)
     {
         if (blockIndex % _difficultyIncreaseFrequency == 0)
