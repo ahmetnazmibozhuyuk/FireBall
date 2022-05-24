@@ -14,7 +14,6 @@ public class GUIController : MonoBehaviour
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject holdStartText;
 
-
     private float _score;
 
     public void HandleRestartButton()
@@ -30,6 +29,7 @@ public class GUIController : MonoBehaviour
         realtimeScoreText.gameObject.SetActive(false);
         gameOverPanel.SetActive(true);
 
+        //nested if made more readable
 
         if (!PlayerPrefs.HasKey("HighScore") || _score > PlayerPrefs.GetFloat("HighScore"))
         {
@@ -39,6 +39,7 @@ public class GUIController : MonoBehaviour
         highscoreText.text = "HighestScore: " + PlayerPrefs.GetFloat("HighScore").ToString("0.00");
 
     }
+    //high score setting is moved to an another method so that it is more readable
     private void NewHighScore()
     {
         PlayerPrefs.SetFloat("HighScore", _score);

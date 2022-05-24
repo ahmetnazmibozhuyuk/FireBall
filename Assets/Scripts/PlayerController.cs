@@ -38,10 +38,12 @@ public class PlayerController : MonoBehaviour
         //I choose to use Awake method for operations like GetComponent so that I have no problems using said components on the Start method.
         _jointCreator = GetComponent<JointCreator>();
     }
+
     private void Start()
     {
         // BlockCreator and playerFollower are initialized from their respective methods.
         BlockCreator.GetSingleton().Initialize(30, blockPrefabs, pointPrefab);
+        _jointCreator.InitializeJoint(BlockCreator.GetSingleton().GetBlockPositionByIndex(0));
         playerFollower.SetPosition(transform);
     }
     private void Update()
@@ -70,7 +72,8 @@ public class PlayerController : MonoBehaviour
             playerRigidbody.AddForce(Vector3.one * swingSpeed);
         }
     }
-    public void PointerDown()
+    //PointerDown() and PointerUp() methods won't be used outside this class so they are set as private.
+    private void PointerDown()
     {
         _inputIsDown = true;
         _jointCreator.FindRelativePosForHingeJoint(BlockCreator.GetSingleton().GetRelativeBlock(transform.position.z));
@@ -82,8 +85,7 @@ public class PlayerController : MonoBehaviour
             _gameStarted = true;
         }
     }
-
-    public void PointerUp()
+    private void PointerUp()
     {
         _inputIsDown = false;
         _jointCreator.BreakJoint();
@@ -96,14 +98,10 @@ public class PlayerController : MonoBehaviour
             PointerUp();
             gameObject.SetActive(false);
             _gameOver = true;
-
-            //If you know a more modular way to update UI, change the code below
-
             //GUI related methods, fields and properties have relocated to GUIController.
             guiController.GameOver();
         }
     }
-
     private void OnTriggerEnter(Collider other)
     {
         //Magic numbers removed.

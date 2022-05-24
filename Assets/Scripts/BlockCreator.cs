@@ -29,7 +29,12 @@ public class BlockCreator : MonoBehaviour
 
     private float _elevation;
 
-    private readonly float _maxElevation = 10;
+    private readonly float _elevationBaseStep = 0.5f;
+    private readonly float _difficultyMultiplier = 0.1f;
+
+    private readonly float _maxElevation = 10f;
+    private readonly float _minElevation = 0f;
+
     public static BlockCreator GetSingleton()
     {
         if (singleton == null)
@@ -46,6 +51,7 @@ public class BlockCreator : MonoBehaviour
         _pointPrefab = pPrefab;
         InstantiateBlocks();
     }
+    #region Block - Point Generation and Positions
     public void InstantiateBlocks()
     {
         for (int i = 0; i < _blockCount; i++)
@@ -88,6 +94,20 @@ public class BlockCreator : MonoBehaviour
 
         _blockPoolCounter++;
     }
+    //initial joint location is called from this method.
+    public Vector3 GetBlockPositionByIndex(int index)
+    {
+        if (index >= _blockPool.Count || index < 0)
+        {
+            Debug.LogError("The block doesn't exist in the pool.");
+            return Vector3.zero;
+        }
+
+        return new Vector3(
+            _blockPool[index].transform.position.x,
+            _blockPool[index].transform.position.y - _lastHeightUpperBlock * 0.5f, // Get the bottom point of the block
+            _blockPool[index].transform.position.z);
+    }
     private void AddNextPoint(int blockIndex)
     {
         if (blockIndex % _pointFrequency == 0)
@@ -96,25 +116,29 @@ public class BlockCreator : MonoBehaviour
             _pointObject.transform.GetChild(0).gameObject.SetActive(true);
         }
     }
+    #endregion
+
+    #region Elevation - Difficulty
     private void ChangeElevation()
     {
-
+        //Check if should increase or decrease elevation.
         if (_elevation > _maxElevation)
         {
             _shouldIncreaseElevation = false;
         }
-        if(_elevation < 0)
+        if(_elevation < _minElevation)
         {
             _shouldIncreaseElevation = true;
         }
 
+        // Apply elevation
         if (_shouldIncreaseElevation)
         {
-            _elevation += 0.5f+_difficulty*0.1f;
+            _elevation += _elevationBaseStep + _difficulty*_difficultyMultiplier;
         }
         else
         {
-            _elevation-= 0.5f-_difficulty * 0.1f;
+            _elevation-= _elevationBaseStep + _difficulty * _difficultyMultiplier;
         }
     }
 
@@ -123,7 +147,7 @@ public class BlockCreator : MonoBehaviour
         if (blockIndex % _difficultyIncreaseFrequency == 0)
         {
             _difficulty++;
-            Debug.Log("difficulty increased to " + _difficulty);
         }
     }
+    #endregion
 }

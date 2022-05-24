@@ -26,12 +26,8 @@ public class JointCreator : MonoBehaviour
 
     private bool _addingNewJoint;
 
-    private void Start()
-    {
-        InitializeJoint(new Vector3(0, 5, 0));
-    }
     //Joint initialization method is seperated from regular Joint creation method because it is created instantly.
-    private void InitializeJoint(Vector3 blockPosition)
+    public void InitializeJoint(Vector3 blockPosition)
     {
         hJoint.anchor = blockPosition - transform.position;
         lRenderer.enabled = true;
@@ -53,6 +49,7 @@ public class JointCreator : MonoBehaviour
         {
             _lineLength = Mathf.Lerp(0, 1,_timeElapsed);
             _timeElapsed += Time.deltaTime*ropeSpeed;
+            //Quaternion.Inverse operation is applied to 
             lRenderer.SetPosition(1, Quaternion.Inverse(transform.rotation) * (blockPosition - transform.position) * _lineLength);
             if (!_addingNewJoint)
             {
